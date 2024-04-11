@@ -1,0 +1,21 @@
+{
+  "name": "Docker Compose",
+  "service": "api",
+  "dockerComposeFile": "../docker-composeapi.yml",
+  "workspaceFolder": "/usr/src/app",
+  "customizations": {
+    "settings": {},
+    "extensions": [
+      "pmneo.tsimporter",
+      "stringham.move-ts",
+      "rbbit.typescript-hero",
+      "ms-vscode.vscode-typescript-tslint-plugin",
+      "streetsidesoftware.code-spell-checker-french"
+    ],
+    "vscode": {
+      "extensions": ["GitHub.copilot"]
+    }
+  },
+  // Quelques extensions VSCode à inclure par défaut pour notre projet
+  "forwardPorts": [3000]
+}
