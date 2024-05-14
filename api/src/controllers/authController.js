@@ -1,21 +1,27 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { createJWT } from "../services/JWT.js";
+import {
+  newUser as newUserService,
+  getUser as getUserService,
+} from "../services/UserService.js";
+import { ROLE_USER } from "../constants/userConst.js";
 
 export const registerUser = async (req, res) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: "Invalid payload" });
+    }
     const existingUser = await User.findOne({ username });
-
     if (existingUser) {
       return res.status(400).json({ message: "Username already exists" });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword });
-    await newUser.save();
-
-    res.status(201).json({ message: "User registered successfully" });
+    const user = await newUserService({ username, password, role: ROLE_USER });
+    const token = createJWT({
+      userId: user._id,
+    });
+    res.json({ user, token });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -35,13 +41,26 @@ export const loginUser = async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    //modify to add in token all info of player except password const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {expiresIn: "1h",});
-    const token = jwt.sign({ userId: user._id, username: user.username, rolls: user.rolls, pastriesWon: user.pastriesWon }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+
+    const userId = user._id;
+    const token = createJWT({
+      userId,
     });
+    const userEmbedded = await getUserService(userId);
+    res.json({ user: userEmbedded, token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-
-    res.json({ token });
+export const checkUser = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const user = await getUserService(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
