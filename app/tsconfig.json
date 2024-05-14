@@ -18,8 +18,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
   },
-  "include": ["src"],
+  "include": ["src", "redux/store.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
