@@ -51,10 +51,18 @@ const NavBar: React.FC = () => {
   return (
     <nav className="flex flex-row justify-between items-center p-4 bg-background text-white w-full top-0 fixed z-50 shadow-md shadow-gray-900">
       <div className="w-1/3 flex justify-start">
-        <FaHome className="w-6 h-6" onClick={redirectHome} />
+        <FaHome
+          className="w-6 h-6 hover:cursor-pointer"
+          onClick={redirectHome}
+        />
       </div>
       <div className="w-1/3 flex justify-center">
-        <img src={Logo} alt="logo" className="h-20" onClick={redirectHome} />
+        <img
+          src={Logo}
+          alt="logo"
+          className="h-20 hover:cursor-pointer"
+          onClick={redirectHome}
+        />
       </div>
       <div className="w-1/3 flex justify-end">
         <Menu as="div" className="relative inline-block text-left">

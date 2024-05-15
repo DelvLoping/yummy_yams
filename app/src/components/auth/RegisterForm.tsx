@@ -35,14 +35,13 @@ const RegisterForm: React.FC = () => {
         id="username"
         name="username"
         label="Username"
-        placeholder="Username"
         type="text"
         required
         value={formData.username}
         onChange={handleChange}
       />
 
-      <div>
+      <div className=" flex flex-col gap-2">
         <Input
           id="password"
           name="password"

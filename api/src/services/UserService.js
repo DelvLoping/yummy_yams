@@ -2,6 +2,15 @@ import User from "../models/User.js";
 import { getRoll } from "./RollService.js";
 import bcrypt from "bcryptjs";
 
+export const getUsers = async () => {
+  const users = await User.find({}, { password: 0 });
+  return Promise.all(
+    users.map(async (user) => {
+      return await getUser(user._id);
+    })
+  );
+};
+
 export const newUser = async (payload) => {
   const { username, password } = payload;
   const hashedPassword = await bcrypt.hash(password, 10);

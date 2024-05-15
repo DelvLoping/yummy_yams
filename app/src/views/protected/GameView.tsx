@@ -11,6 +11,7 @@ import PastryWon from "../../components/game/PastryWon";
 import HistoryRoll from "../../components/game/HistoryRoll";
 import _ from "lodash";
 import "./GameView.css";
+import WinBoard from "../../components/game/WinBoard";
 
 const GameView: React.FC = () => {
   const currentEventName =
@@ -26,7 +27,7 @@ const GameView: React.FC = () => {
   const eventReducer = useSelector((state: IRootState) => state.game as IGame);
   const { event, loading } = eventReducer;
   const userReducer = useSelector((state: IRootState) => state.auth as IAuth);
-  const { jwt, user } = userReducer;
+  const { user } = userReducer;
   const {
     _id: eventId,
     open: eventOpen,
@@ -72,9 +73,6 @@ const GameView: React.FC = () => {
     customAxios({
       method: "get",
       url: `/game/${eventId}/launchRoll`,
-      headers: {
-        Authorization: jwt,
-      },
     })
       .then((response) => {
         if (response.status === 200) {
@@ -110,26 +108,38 @@ const GameView: React.FC = () => {
             ).toLocaleDateString("fr")}`}
       </p>
 
-      <div className="flex flex-row w-full items-center justify-bewteen h-[25rem] p-8 gap-4">
-        <div className="flex flex-col w-2/3 items-center justify-start bg-blue-500/10 h-full rounded-lg px-8 pb-8 pt-20">
-          <RollGame
-            dices={dices}
-            isUserAlreadyRolled={isUserAlreadyRolled}
-            isWon={isUserWon}
-            launch={launch}
-            message={message}
-            disabled={!eventOpen || isUserWon || isUserAlreadyRolled}
-          />
-        </div>
+      {eventOpen ? (
+        <>
+          <div className="flex flex-row w-full items-center justify-bewteen h-[25rem] p-8 gap-4">
+            <div className="flex flex-col w-2/3 items-center justify-start bg-blue-500/10 h-full rounded-lg px-8 pb-8 pt-20">
+              <RollGame
+                dices={dices}
+                isUserAlreadyRolled={isUserAlreadyRolled}
+                isWon={isUserWon}
+                launch={launch}
+                message={message}
+                disabled={!eventOpen || isUserWon || isUserAlreadyRolled}
+              />
+            </div>
 
-        <div className="flex flex-col bg-blue-500/10 h-full overflow-y-auto rounded-lg px-8 pb-8 pt-4 w-1/3">
-          <PastryWon pastryWon={pastryWon} />
-        </div>
-      </div>
-      {rolls.length > 0 && (
-        <div className="flex flex-col w-full items-center justify-center pb-8 px-8">
-          <HistoryRoll rolls={rolls} />
-        </div>
+            <div className="flex flex-col bg-blue-500/10 h-full overflow-y-auto rounded-lg px-8 pb-8 pt-4 w-1/3">
+              <PastryWon pastryWon={pastryWon} />
+            </div>
+          </div>
+          {rolls.length > 0 && (
+            <div className="flex flex-col w-full items-center justify-center pb-8 px-8">
+              <HistoryRoll rolls={rolls} />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {eventId && (
+            <div className="flex flex-col w-fit items-center justify-start bg-blue-500/10 h-full rounded-lg p-4 mt-10">
+              <WinBoard eventId={eventId} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

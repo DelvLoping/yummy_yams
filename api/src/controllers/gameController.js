@@ -4,6 +4,7 @@ import { carre, double, noCombination, yams } from "../constants/rollConst.js";
 import Pastry from "../models/Pastry.js";
 import Event from "../models/Event.js";
 import { getRoll as getRollService } from "../services/RollService.js";
+import { getUsers as getUsersService } from "../services/UserService.js";
 
 export const launchRoll = async (req, res) => {
   const { userId } = req.user;
@@ -47,22 +48,22 @@ export const launchRoll = async (req, res) => {
     }
 
     let winCombination = noCombination;
-
-    const uniqueValues = new Set(diceValues);
-    if (uniqueValues.size === 1) {
+    let nbPastryWin = 0;
+    if (diceValues.every((val, i, arr) => val === arr[0])) {
       winCombination = yams;
-    } else {
-      const counts = {};
-      for (const value of diceValues) {
-        counts[value] = counts[value] ? counts[value] + 1 : 1;
-      }
-      const maxCount = Math.max(...Object.values(counts));
-
-      if (maxCount === 4) {
-        winCombination = carre;
-      } else if (maxCount === 2 && Object.keys(counts).length === 3) {
-        winCombination = double;
-      }
+      nbPastryWin = 3;
+    } else if (
+      diceValues.some((val) => diceValues.filter((v) => v === val).length === 4)
+    ) {
+      winCombination = carre;
+      nbPastryWin = 2;
+    } else if (
+      diceValues.filter(
+        (val) => diceValues.filter((v) => v === val).length === 2
+      ).length === 4
+    ) {
+      winCombination = double;
+      nbPastryWin = 1;
     }
 
     const roll = new Roll({
@@ -79,26 +80,22 @@ export const launchRoll = async (req, res) => {
             $expr: { $lt: ["$quantityWon", "$stock"] },
           },
         },
-        { $sample: { size: 1 } },
+        { $sample: { size: nbPastryWin } },
       ]);
 
-      // Extraire l'ID de la pâtisserie de l'agrégation
-      const pastryId =
-        pastryAggregation.length > 0 ? pastryAggregation[0]._id : null;
+      if (pastryAggregation.length > 0) {
+        await Promise.all(
+          pastryAggregation.map(async (pastry) => {
+            const { _id } = pastry;
+            const pastryObject = await Pastry.findOne({ _id: _id });
 
-      // Rechercher la pâtisserie par son ID
-      const pastry = await Pastry.findOne({ _id: pastryId });
-
-      if (pastry) {
-        const pastryId = pastry._id;
-        roll.pastryWon = pastryId;
-        pastry.quantityWon += 1;
-        await pastry.save();
-      } else {
-        event.open = false;
-        event.closedAt = new Date();
-        await event.save();
-        res.json({ message: "Event is closed" });
+            if (pastryObject) {
+              roll.pastryWon.push(_id);
+              pastryObject.quantityWon += 1;
+              await pastryObject.save();
+            }
+          })
+        );
       }
     }
     user.rolls.push(roll);
@@ -107,6 +104,47 @@ export const launchRoll = async (req, res) => {
 
     const rollEmbedded = await getRollService(roll._id);
     res.json(rollEmbedded);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const checkGame = async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      res.status(404).json({ message: "Event not found" });
+      return;
+    }
+    if (event.open) {
+      res.json({ open: true });
+      return;
+    } else {
+      const users = await getUsersService();
+      const usersFiltered = users
+        .map((user) => {
+          const userRolls = user.rolls.filter(
+            (roll) => roll.event._id == eventId
+          );
+          const userRollsWin = userRolls.filter(
+            (roll) => roll.pastryWon.length > 0
+          );
+          if (userRollsWin.length > 0) {
+            return {
+              _id: user._id,
+              username: user.username,
+              rolls: userRollsWin,
+              role: user.role,
+            };
+          }
+
+          return null;
+        })
+        .filter((user) => user !== null);
+
+      res.json(usersFiltered);
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
