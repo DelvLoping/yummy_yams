@@ -4,16 +4,18 @@ services:
   api:
     build: ./api
     ports:
-      - 3001:3001
+      - ${PORT}:3001
     volumes:
       - ./api:/usr/src/app
       - /usr/src/app/node_modules
-
     environment:
       - NODE_ENV=development
-      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT}
     depends_on:
-      - mongo
+      - mongo-express
+    networks:
+      - yummy-yams-network
 
   app:
     build: ./app
@@ -22,17 +24,58 @@ services:
     volumes:
       - ./app:/usr/src/app
       - /usr/src/app/node_modules
-
     environment:
       - NODE_ENV=development
+      - API_URL=http://api:${PORT}
     depends_on:
       - api
+    networks:
+      - yummy-yams-network
 
   mongo:
+    container_name: docker_mongo
     image: mongo:latest
     ports:
-      - 27017:27017
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
-      - ./data:/data/db
-      - ./dbms:/dbms
-    command: ["bash", "/dbms/init-mongo.sh"]
+      - ./dbms/pastries.json:/usr/src/pastries.json
+      - ./dbms/init-mongo.sh:/dbms/init-mongo.sh
+      - docker_mongo_data:/data/db
+    networks:
+      - yummy-yams-network
+
+  mongo-express:
+    container_name: docker_mongo_express
+    image: mongo-express:latest
+    depends_on:
+      - mongo
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=${ME_CONFIG_MONGODB_SERVER}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${ME_CONFIG_MONGODB_ADMINUSERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${ME_CONFIG_MONGODB_ADMINPASSWORD}
+      - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
+    ports:
+      - "8081:8081"
+    networks:
+      - yummy-yams-network
+
+  mongo-seed:
+    build: ./dbms
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_HOST: mongo:27017
+    depends_on:
+      - mongo
+    networks:
+      - yummy-yams-network
+
+volumes:
+  docker_mongo_data:
+
+networks:
+  yummy-yams-network:

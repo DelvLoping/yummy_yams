@@ -16,6 +16,11 @@ export const getEvent = async (eventId) => {
   return event;
 };
 
+export const getEventByName = async (name) => {
+  const event = await Event.findOne({ name });
+  return event;
+};
+
 export const updateEvent = async (eventId, payload) => {
   const { name, open, closedAt } = payload;
   const event = await Event.findById(eventId);
@@ -47,6 +52,6 @@ export const deleteEvent = async (eventId) => {
   if (!event) {
     return null;
   }
-  await event.delete();
+  await Event.deleteOne({ _id: eventId });
   return event;
 };

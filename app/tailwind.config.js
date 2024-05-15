@@ -12,7 +12,7 @@ export default {
       },
       colors: {
         background: "#02010A",
-        "background-secondary": "#242424",
+        "background-secondary": "#000000",
         //primary: "#854442",
         primary: "#3b82f6",
       },

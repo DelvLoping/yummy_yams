@@ -8,7 +8,7 @@ import { FaHome, FaUser } from "react-icons/fa";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import Logo from "../../assets/logo.svg";
 const NavBar: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ const NavBar: React.FC = () => {
         <FaHome className="w-6 h-6" onClick={redirectHome} />
       </div>
       <div className="w-1/3 flex justify-center">
-        <h1 className="text-3xl">Yummy-Yams</h1>
+        <img src={Logo} alt="logo" className="h-20" onClick={redirectHome} />
       </div>
       <div className="w-1/3 flex justify-end">
         <Menu as="div" className="relative inline-block text-left">

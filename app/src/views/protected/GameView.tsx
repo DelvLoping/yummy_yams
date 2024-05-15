@@ -13,9 +13,9 @@ import _ from "lodash";
 import "./GameView.css";
 
 const GameView: React.FC = () => {
-  const eventId =
-    new URLSearchParams(window.location.search).get("eventId") ||
-    "661ab86cee663ff67b8f276d";
+  const currentEventName =
+    new URLSearchParams(window.location.search).get("eventName") ||
+    "Yummy-Yams";
   const dispatch: AppDispatch = useDispatch();
   const { customAxios } = useAxios();
   const [rolls, setRolls] = useState<IRoll[]>([]);
@@ -28,6 +28,7 @@ const GameView: React.FC = () => {
   const userReducer = useSelector((state: IRootState) => state.auth as IAuth);
   const { jwt, user } = userReducer;
   const {
+    _id: eventId,
     open: eventOpen,
     name: eventName,
     createdAt: eventCreatedAt,
@@ -37,7 +38,7 @@ const GameView: React.FC = () => {
   const isUserAlreadyRolled = rolls.length >= 3;
 
   useEffect(() => {
-    dispatch(getEvent(eventId));
+    dispatch(getEvent(currentEventName));
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -90,7 +91,7 @@ const GameView: React.FC = () => {
   };
 
   return (
-    <div className=" pt-4 px-10 flex flex-col items-center justify-center">
+    <div className=" pt-8 px-10 flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-8">
         Event : <span className="text-primary">{eventName}</span>
       </h1>

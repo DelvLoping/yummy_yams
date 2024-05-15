@@ -48,6 +48,6 @@ export const deleteUser = async (userId) => {
   if (!user) {
     return null;
   }
-  await user.delete();
+  await User.deleteOne({ _id: userId });
   return user;
 };

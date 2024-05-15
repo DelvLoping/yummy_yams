@@ -5,6 +5,7 @@ import Roll from "../models/Roll.js";
 import User from "../models/User.js";
 import {
   getEvent as getEventService,
+  getEventByName as getEventByNameService,
   newEvent as newEventService,
   updateEvent as updateEventService,
   deleteEvent as deleteEventService,
@@ -161,6 +162,19 @@ export const clearEvent = async (req, res) => {
     );
 
     res.json({ message: "Event cleared successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getEventByName = async (req, res) => {
+  const { name } = req.params;
+  try {
+    const event = await getEventByNameService(name);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+    res.json(event);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

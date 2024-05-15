@@ -53,6 +53,6 @@ export const deleteRoll = async (rollId) => {
   if (!roll) {
     return null;
   }
-  await roll.delete();
+  await Roll.deleteOne({ _id: rollId });
   return roll;
 };

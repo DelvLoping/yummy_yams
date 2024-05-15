@@ -44,6 +44,6 @@ export const deletePastry = async (pastryId) => {
   if (!pastry) {
     return null;
   }
-  await pastry.delete();
+  await Pastry.deleteOne({ _id: pastryId });
   return pastry;
 };

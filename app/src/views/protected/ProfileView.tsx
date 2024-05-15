@@ -8,6 +8,7 @@ import useAxios from "../../hook/axios";
 import Spinner from "../../components/ui/Spinner";
 import { updateUser } from "../../redux/slices/auth";
 import Input from "../../components/ui/Input";
+import { ROLE_ADMIN } from "../../constants/api";
 
 interface IEventClearable extends IEvent {
   clear: boolean;
@@ -18,6 +19,7 @@ const ProfileView: React.FC = () => {
   const { customAxios } = useAxios();
   const userReducer = useSelector((state: IRootState) => state.auth as IAuth);
   const { user } = userReducer;
+  const { role } = user;
   const [formData, setFormData] = useState<{
     username: string;
     newPassword: string;
@@ -44,6 +46,7 @@ const ProfileView: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const isAdmin = role === ROLE_ADMIN;
   useEffect(() => {
     if (formData.newPassword !== formData.confirmNewPassword) {
       setUserError("Passwords do not match");
@@ -122,10 +125,12 @@ const ProfileView: React.FC = () => {
       (formData.newPassword !== "" &&
         formData.confirmNewPassword !== "" &&
         _.isEqual(formData.newPassword, formData.confirmNewPassword));
+
     setLoading(true);
     setEventErrorChanged([]);
     setEventErrorClear([]);
     setSuccessFullClear(false);
+
     const userRequest = isUserChanged
       ? customAxios({
           url: "/user/" + user._id,
@@ -136,9 +141,7 @@ const ProfileView: React.FC = () => {
           },
         })
           .then((response) => {
-            console.log(response);
             if (response.status === 200) {
-              console.log(response.data);
               dispatch(updateUser(response.data));
             }
           })
@@ -149,7 +152,7 @@ const ProfileView: React.FC = () => {
 
     const eventsChangedFiltered = eventsChanged.filter((event: IEvent) => {
       const oldEvent = _.find(events, { _id: event._id });
-      return !_.isEqual(event, oldEvent);
+      return !_.isEqual(event, oldEvent) && isAdmin;
     });
     const eventsChangedRequest = eventsChangedFiltered.map((event: IEvent) => {
       customAxios({
@@ -182,7 +185,7 @@ const ProfileView: React.FC = () => {
 
     const eventsClearFiltered: IEventClearable[] = eventsClear.filter(
       (event: IEventClearable) => {
-        return event.clear;
+        return event.clear && isAdmin;
       }
     );
     const eventsClearRequest = eventsClearFiltered.map(
@@ -263,7 +266,7 @@ const ProfileView: React.FC = () => {
 
   return (
     <>
-      <div className=" px-10 flex flex-col items-center justify-center pb-10">
+      <div className=" px-10 flex flex-col items-center justify-center pb-10 pt-8">
         <h1 className="text-3xl font-bold mb-28">Profile</h1>
         <form>
           <div className="space-y-12">
@@ -325,106 +328,108 @@ const ProfileView: React.FC = () => {
               )}
             </div>
 
-            <div className="border-b border-gray-400/10 pb-12">
-              <h2 className="text-base font-semibold leading-7 text-white">
-                Event
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                Admin granted section allow you to manage events.
-              </p>
+            {isAdmin && (
+              <div className="border-b border-gray-400/10 pb-12">
+                <h2 className="text-base font-semibold leading-7 text-white">
+                  Event
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                  Admin granted section allow you to manage events.
+                </p>
 
-              <div className="mt-10 space-y-10">
-                <fieldset>
-                  <legend className="text-sm font-semibold leading-6 text-white/80">
-                    Close event
-                  </legend>
-                  <div className="mt-6 space-y-6">
-                    {eventsChanged.map((event) => {
-                      const { _id, name, open } = event;
-                      const oldEvent = _.find(events, { _id: _id });
-                      const { open: oldOpen } = oldEvent || {};
-                      return (
-                        <div
-                          className="relative flex gap-x-3"
-                          key={"eventClose" + _id}
-                        >
-                          <div className="flex h-6 items-center">
-                            <input
-                              id={"eventClose" + _id}
-                              name={"eventClose" + _id}
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                              checked={!open}
-                              onChange={(e) => closeEvent(e, event)}
-                            />
+                <div className="mt-10 space-y-10">
+                  <fieldset>
+                    <legend className="text-sm font-semibold leading-6 text-white/80">
+                      Close event
+                    </legend>
+                    <div className="mt-6 space-y-6">
+                      {eventsChanged.map((event) => {
+                        const { _id, name, open } = event;
+                        const oldEvent = _.find(events, { _id: _id });
+                        const { open: oldOpen } = oldEvent || {};
+                        return (
+                          <div
+                            className="relative flex gap-x-3"
+                            key={"eventClose" + _id}
+                          >
+                            <div className="flex h-6 items-center">
+                              <input
+                                id={"eventClose" + _id}
+                                name={"eventClose" + _id}
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                checked={!open}
+                                onChange={(e) => closeEvent(e, event)}
+                              />
+                            </div>
+                            <div className="text-sm leading-6">
+                              <label
+                                htmlFor={"eventClose" + _id}
+                                className="font-medium text-gray-400"
+                              >
+                                {name}
+                              </label>
+                              <p className="text-gray-500">
+                                {oldOpen
+                                  ? " This event is open"
+                                  : " This event is closed"}
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-sm leading-6">
-                            <label
-                              htmlFor={"eventClose" + _id}
-                              className="font-medium text-gray-400"
-                            >
-                              {name}
-                            </label>
-                            <p className="text-gray-500">
-                              {oldOpen
-                                ? " This event is open"
-                                : " This event is closed"}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </fieldset>
-                <fieldset>
-                  <legend className="text-sm font-semibold leading-6 text-white/80">
-                    Clear event
-                  </legend>
-                  <div className="mt-6 space-y-6">
-                    {eventsClear.map((event) => {
-                      const { _id, name, clear } = event;
-                      const oldEvent = _.find(events, { _id: _id });
-                      const { open: oldOpen } = oldEvent || {};
-                      return (
-                        <div
-                          className="relative flex gap-x-3"
-                          key={"eventClear" + _id}
-                        >
-                          <div className="flex h-6 items-center">
-                            <input
-                              id={"eventClear" + _id}
-                              name={"eventClear" + _id}
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                              checked={clear}
-                              onChange={(e) => clearEvent(e, event)}
-                            />
-                          </div>
-                          <div className="text-sm leading-6">
-                            <label
-                              htmlFor={"eventClear" + _id}
-                              className="font-medium text-gray-400"
-                            >
-                              {name}
-                            </label>
-                            <p className="text-gray-500">
-                              {oldOpen
-                                ? " This event is open"
-                                : " This event is closed"}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {successFullClear && (
-                    <div className="mt-4 text-green-500 text-sm">
-                      Events have been cleared
+                        );
+                      })}
                     </div>
-                  )}
-                </fieldset>
+                  </fieldset>
+                  <fieldset>
+                    <legend className="text-sm font-semibold leading-6 text-white/80">
+                      Clear event
+                    </legend>
+                    <div className="mt-6 space-y-6">
+                      {eventsClear.map((event) => {
+                        const { _id, name, clear } = event;
+                        const oldEvent = _.find(events, { _id: _id });
+                        const { open: oldOpen } = oldEvent || {};
+                        return (
+                          <div
+                            className="relative flex gap-x-3"
+                            key={"eventClear" + _id}
+                          >
+                            <div className="flex h-6 items-center">
+                              <input
+                                id={"eventClear" + _id}
+                                name={"eventClear" + _id}
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                checked={clear}
+                                onChange={(e) => clearEvent(e, event)}
+                              />
+                            </div>
+                            <div className="text-sm leading-6">
+                              <label
+                                htmlFor={"eventClear" + _id}
+                                className="font-medium text-gray-400"
+                              >
+                                {name}
+                              </label>
+                              <p className="text-gray-500">
+                                {oldOpen
+                                  ? " This event is open"
+                                  : " This event is closed"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {successFullClear && (
+                      <div className="mt-4 text-green-500 text-sm">
+                        Events have been cleared
+                      </div>
+                    )}
+                  </fieldset>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {loading ? (

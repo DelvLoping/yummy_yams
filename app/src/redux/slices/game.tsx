@@ -23,38 +23,43 @@ const getEvent = createAsyncThunk<
   IEvent,
   string,
   { rejectValue: { message: string } | string; state: IRootState }
->("event", async (eventId: string, { rejectWithValue, dispatch, getState }) => {
-  try {
-    const state = getState();
-    const jwt: string = state.auth.jwt;
-    const response = await axios.get(`${API_URL}/event/${eventId}`, {
-      headers: {
-        Authorization: jwt,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (
-        error.response &&
-        (error.response.status === 401 || error.response.status === 403)
-      ) {
-        dispatch(logout());
-      }
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        return rejectWithValue({ message: error.response.data.message });
+>(
+  "event",
+  async (eventName: string, { rejectWithValue, dispatch, getState }) => {
+    try {
+      const state = getState();
+      const jwt: string = state.auth.jwt;
+      const response = await axios.get(`${API_URL}/event/name/${eventName}`, {
+        headers: {
+          Authorization: jwt,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (
+          error.response &&
+          (error.response.status === 401 || error.response.status === 403)
+        ) {
+          dispatch(logout());
+        }
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          return rejectWithValue({ message: error.response.data.message });
+        } else {
+          return rejectWithValue(
+            "An error occurred while trying to get event."
+          );
+        }
       } else {
-        return rejectWithValue("An error occurred while trying to get event.");
+        throw new Error("different error than axios");
       }
-    } else {
-      throw new Error("different error than axios");
     }
   }
-});
+);
 
 const gameSlice = createSlice({
   name: "game",
