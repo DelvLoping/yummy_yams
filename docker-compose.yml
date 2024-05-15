@@ -12,6 +12,7 @@ services:
       - NODE_ENV=development
       - JWT_SECRET=${JWT_SECRET}
       - PORT=${PORT}
+      - MONGO_URL=${MONGO_URL}
     depends_on:
       - mongo-express
     networks:

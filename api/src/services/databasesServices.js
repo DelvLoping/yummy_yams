@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export async function connectToDatabase() {
   try {
-    await mongoose.connect("mongodb://localhost:27017/yummy-yams", {
+    await mongoose.connect(process.env.MONGO_URL + "/yummy-yams", {
       authSource: "admin",
       user: "root",
       pass: "foobar",
