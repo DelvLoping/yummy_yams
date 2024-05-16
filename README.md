@@ -12,8 +12,7 @@ Clone the repository to your local machine.
 https://github.com/DelvLoping/yummy_yams.git
 ```
 
-Navigate to the project directory.
-Run the following command to launch the project:
+Navigate to the project directory and run the following command to launch the project:
 
 ```
 docker-compose up
