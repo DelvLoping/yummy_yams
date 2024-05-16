@@ -29,7 +29,9 @@ export interface IEvent {
   open: boolean;
   closedAt?: string | null;
 }
-
+export interface IEventClearable extends IEvent {
+  clear: boolean;
+}
 export interface IAuth {
   user: IUser;
   isAuthenticated: boolean;

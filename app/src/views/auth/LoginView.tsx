@@ -22,7 +22,7 @@ const LoginView: React.FC = () => {
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
             {error && (
               <div className="mt-4">
-                <p className="text-sm text-red-500 text-center font-semibold">
+                <p className="text-sm text-red-500 text-center font-semibold mb-4">
                   {error}
                 </p>
               </div>

@@ -2,17 +2,15 @@
 import React, { useEffect, useState } from "react";
 import _ from "lodash";
 import { AppDispatch, IRootState } from "../../redux/store";
-import { IAuth, IEvent } from "../../redux/types";
+import { IAuth, IEvent, IEventClearable } from "../../redux/types";
 import { useDispatch, useSelector } from "react-redux";
 import useAxios from "../../hook/axios";
 import Spinner from "../../components/ui/Spinner";
 import { updateUser } from "../../redux/slices/auth";
-import Input from "../../components/ui/Input";
 import { ROLE_ADMIN } from "../../constants/api";
-
-interface IEventClearable extends IEvent {
-  clear: boolean;
-}
+import ConfidentialInformationForm from "../../components/profil/ConfidentialInformationForm";
+import GeneralInformationForm from "../../components/profil/GeneralInformationForm";
+import EventManagement from "../../components/profil/EventManagement";
 
 const ProfileView: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -55,18 +53,21 @@ const ProfileView: React.FC = () => {
     }
   }, [formData.newPassword, formData.confirmNewPassword]);
 
-  const cancel = () => {
-    setFormData({
-      username: user.username,
-      newPassword: "",
-      confirmNewPassword: "",
-    });
+  const updateEventsLists = (events: IEvent[]) => {
     setEventsChanged([...events]);
     const eventsWithClear: IEventClearable[] = events.map((event) => ({
       ...event,
       clear: false,
     }));
     setEventsClear([...eventsWithClear]);
+  };
+  const cancel = () => {
+    setFormData({
+      username: user.username,
+      newPassword: "",
+      confirmNewPassword: "",
+    });
+    updateEventsLists(events);
   };
 
   useEffect(() => {
@@ -77,14 +78,7 @@ const ProfileView: React.FC = () => {
     })
       .then((response) => {
         setEvents(response.data);
-        setEventsChanged([...response.data]);
-        const eventsWithClear: IEventClearable[] = response.data.map(
-          (event: IEvent) => ({
-            ...event,
-            clear: false,
-          })
-        );
-        setEventsClear([...eventsWithClear]);
+        updateEventsLists(response.data);
       })
       .catch((error) => {
         console.log(error);
@@ -171,8 +165,10 @@ const ProfileView: React.FC = () => {
             const updatedEvents: IEvent[] = _.cloneDeep(events);
             _.set(updatedEvents, `[${eventIndex}]`, newEvent);
             setEvents(updatedEvents);
+            updateEventsLists(updatedEvents);
           } else {
             setEvents([...events, newEvent]);
+            updateEventsLists([...events, newEvent]);
           }
         })
         .catch((error) => {
@@ -210,7 +206,7 @@ const ProfileView: React.FC = () => {
       setLoading(false);
       if (eventsClearFiltered.length > 0) {
         setEventsClear(
-          _.map(eventsClear, (event) => ({
+          _.map(events, (event) => ({
             ...event,
             clear: false,
           }))
@@ -270,165 +266,24 @@ const ProfileView: React.FC = () => {
         <h1 className="text-3xl font-bold mb-28">Profile</h1>
         <form>
           <div className="space-y-12">
-            <div className="border-b border-gray-400/10 pb-12">
-              <h2 className="text-base font-semibold leading-7 text-white">
-                General Information
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                You can update your general information here.
-              </p>
-              <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                <Input
-                  id="username"
-                  name="username"
-                  label="Username"
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="sm:col-span-4"
-                />
-              </div>
-            </div>
-
-            <div className="border-b border-gray-400/10 pb-12">
-              <h2 className="text-base font-semibold leading-7 text-white">
-                Confidential Information
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                Be careful if you change your password, we cannot recover it.
-              </p>
-
-              <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  label="New password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  className="sm:col-span-4"
-                />
-                <Input
-                  id="confirmNewPassword"
-                  name="confirmNewPassword"
-                  label="Confirm new password"
-                  type="password"
-                  autoComplete="confirm-new-password"
-                  required
-                  value={formData.confirmNewPassword}
-                  onChange={handleChange}
-                  className="sm:col-span-4"
-                />
-              </div>
-              {userError && (
-                <div className="mt-4 text-red-500 text-sm">{userError}</div>
-              )}
-            </div>
-
+            <GeneralInformationForm
+              formData={formData}
+              handleChange={handleChange}
+            />
+            <ConfidentialInformationForm
+              formData={formData}
+              handleChange={handleChange}
+              userError={userError}
+            />
             {isAdmin && (
-              <div className="border-b border-gray-400/10 pb-12">
-                <h2 className="text-base font-semibold leading-7 text-white">
-                  Event
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Admin granted section allow you to manage events.
-                </p>
-
-                <div className="mt-10 space-y-10">
-                  <fieldset>
-                    <legend className="text-sm font-semibold leading-6 text-white/80">
-                      Close event
-                    </legend>
-                    <div className="mt-6 space-y-6">
-                      {eventsChanged.map((event) => {
-                        const { _id, name, open } = event;
-                        const oldEvent = _.find(events, { _id: _id });
-                        const { open: oldOpen } = oldEvent || {};
-                        return (
-                          <div
-                            className="relative flex gap-x-3"
-                            key={"eventClose" + _id}
-                          >
-                            <div className="flex h-6 items-center">
-                              <input
-                                id={"eventClose" + _id}
-                                name={"eventClose" + _id}
-                                type="checkbox"
-                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                checked={!open}
-                                onChange={(e) => closeEvent(e, event)}
-                              />
-                            </div>
-                            <div className="text-sm leading-6">
-                              <label
-                                htmlFor={"eventClose" + _id}
-                                className="font-medium text-gray-400"
-                              >
-                                {name}
-                              </label>
-                              <p className="text-gray-500">
-                                {oldOpen
-                                  ? " This event is open"
-                                  : " This event is closed"}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-                  <fieldset>
-                    <legend className="text-sm font-semibold leading-6 text-white/80">
-                      Clear event
-                    </legend>
-                    <div className="mt-6 space-y-6">
-                      {eventsClear.map((event) => {
-                        const { _id, name, clear } = event;
-                        const oldEvent = _.find(events, { _id: _id });
-                        const { open: oldOpen } = oldEvent || {};
-                        return (
-                          <div
-                            className="relative flex gap-x-3"
-                            key={"eventClear" + _id}
-                          >
-                            <div className="flex h-6 items-center">
-                              <input
-                                id={"eventClear" + _id}
-                                name={"eventClear" + _id}
-                                type="checkbox"
-                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                checked={clear}
-                                onChange={(e) => clearEvent(e, event)}
-                              />
-                            </div>
-                            <div className="text-sm leading-6">
-                              <label
-                                htmlFor={"eventClear" + _id}
-                                className="font-medium text-gray-400"
-                              >
-                                {name}
-                              </label>
-                              <p className="text-gray-500">
-                                {oldOpen
-                                  ? " This event is open"
-                                  : " This event is closed"}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {successFullClear && (
-                      <div className="mt-4 text-green-500 text-sm">
-                        Events have been cleared
-                      </div>
-                    )}
-                  </fieldset>
-                </div>
-              </div>
+              <EventManagement
+                events={events}
+                eventsChanged={eventsChanged}
+                eventsClear={eventsClear}
+                closeEvent={closeEvent}
+                clearEvent={clearEvent}
+                successFullClear={successFullClear}
+              />
             )}
           </div>
 
