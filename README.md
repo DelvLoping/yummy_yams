@@ -15,5 +15,5 @@ https://github.com/DelvLoping/yummy_yams.git
 Navigate to the project directory and run the following command to launch the project:
 
 ```
-docker-compose up
+docker compose up
 ```
