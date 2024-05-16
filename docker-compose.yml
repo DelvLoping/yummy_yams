@@ -43,7 +43,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - ./dbms/pastries.json:/usr/src/pastries.json
-      - ./dbms/event.json:/usr/src/event.json
+      - ./dbms/events.json:/usr/src/events.json
       - ./dbms/init-mongo.sh:/dbms/init-mongo.sh
       - docker_mongo_data:/data/db
     networks:
